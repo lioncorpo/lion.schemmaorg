@@ -1,0 +1,198 @@
+@prefix :      <http://example.org/> .
+@prefix ex:      <http://example.org/example> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix schema: <http://schema.org/> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfa:  <http://www.w3.org/ns/rdfa#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+ex:
+	sh:declare [
+		sh:prefix "rdf" ;
+		sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ;
+	];
+	sh:declare [
+		sh:prefix "rdfs" ;
+		sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ;
+	];
+	sh:declare [
+		sh:prefix "schema" ;
+		sh:namespace "http://schema.org/"^^xsd:anyURI ;
+	] 
+.
+
+:labelShape a sh:PropertyShape ;
+      sh:path rdfs:label ;
+      sh:or (
+      [ sh:datatype xsd:string; ]
+      [ sh:datatype rdf:langString; ]
+      );
+      sh:minCount 1 ;
+      sh:maxCount 1 
+	  .
+
+:commentShape a sh:PropertyShape ;
+      sh:path rdfs:comment ;
+      sh:or (
+      [ sh:datatype xsd:string; ]
+      [ sh:datatype rdf:langString; ]
+      );
+      sh:pattern ".*\\.$";
+      sh:severity sh:Warning ;
+      sh:minCount 1 ;
+      sh:maxCount 1 ;
+     .
+:subClassOfShape a sh:PropertyShape ;
+      sh:path rdfs:subClassOf ;
+	  sh:node :Type;
+      sh:minCount 1 ;
+      .
+
+:sourceShape  a sh:PropertyShape ;
+      sh:path dct:source ;
+      sh:nodeKind sh:IRI;
+      .
+
+:categoryShape  a sh:PropertyShape ;
+      sh:path schema:category ;
+      sh:or (
+      [ sh:datatype xsd:string; ]
+      [ sh:datatype rdf:langString; ]
+      );
+      .
+
+:isPartOfShape  a sh:PropertyShape ;
+      sh:path schema:isPartOf ;
+      sh:in ( <http://attic.schema.org> 
+	     <http://auto.schema.org> 
+	     <http://bib.schema.org>
+	     <http://health-lifesci.schema.org>
+	     <http://iot.schema.org>
+	     <http://meta.schema.org>
+	     <http://pending.schema.org>
+	    );
+      .
+
+:supersededByTypeShape   a sh:PropertyShape ;
+      sh:path schema:supersededBy ;
+      sh:class rdfs:Class;
+      .
+:supersededByPropertyShape   a sh:PropertyShape ;
+      sh:path schema:supersededBy ;
+      sh:class rdf:Property;
+    .
+
+:exactMatchShape a sh:PropertyShape ;
+      sh:path skos:exactMatch ;
+      sh:nodeKind sh:IRI;
+      .
+
+:closeMatchShape a sh:PropertyShape ;
+      sh:path skos:closeMatch ;
+      sh:nodeKind sh:IRI;
+      .
+:sameAsShape  a sh:PropertyShape ;
+      sh:path schema:sameAs ;
+      sh:nodeKind sh:IRI;
+      .
+
+:equivalentClassShape a sh:PropertyShape ;
+  sh:path owl:equivalentClass  ;
+ sh:nodeKind sh:IRI .
+
+:rangeIncludesShape a sh:PropertyShape ;
+	sh:path schema:rangeIncludes  ;
+	sh:class [ :Type :DataType ];
+    	sh:minCount 1 
+.
+
+
+:domainIncludesShape a sh:PropertyShape ;
+	sh:path schema:domainIncludes  ;
+ 	sh:class :Type; 
+    	sh:minCount 1 
+.
+
+:inverseOfShape a sh:PropertyShape ;
+	sh:path schema:inverseOf  ;
+ 	sh:node :Prop; 
+.
+
+
+
+:Type a sh:NodeShape, rdfs:Class ;
+sh:nodeKind sh:BlankNodeOrIRI;
+sh:property  :labelShape,
+			:commentShape,
+			:sourceShape
+.
+
+:Types a sh:NodeShape, rdfs:Class ;
+   sh:target [
+		a sh:SPARQLTarget ;
+		sh:prefixes ex: ;
+		sh:select """
+        SELECT DISTINCT ?this WHERE {
+        ?this a rdfs:Class;
+          rdfs:subClassOf+ schema:Thing.
+         }
+		""" ;
+	] ;
+    rdfs:subClassOf :Type
+.
+
+:DataType a sh:NodeShape, rdfs:Class ;
+sh:nodeKind sh:BlankNodeOrIRI;
+	sh:property [ 
+		  sh:path ( [ sh:zeroOrMorePath rdfs:subClassOf ] rdf:type );
+		  sh:class schema:DataType;
+ 	],:labelShape,:commentShape
+.
+
+:DataTypes a sh:NodeShape, rdfs:Class ;
+sh:nodeKind sh:BlankNodeOrIRI;
+   sh:target [
+		a sh:SPARQLTarget ;
+		sh:prefixes ex: ;
+		sh:select """
+        SELECT DISTINCT ?this WHERE {  
+	   ?this rdfs:subClassOf*/rdf:type|rdf:type* schema:DataType.
+         }
+		""" ;
+	] ;
+rdfs:subClassOf :DataType
+.
+
+:Prop a sh:NodeShape, rdfs:Class ;
+sh:nodeKind sh:BlankNodeOrIRI;
+   sh:target [
+		a sh:SPARQLTarget ;
+		sh:prefixes ex: ;
+		sh:select """
+        SELECT DISTINCT ?this WHERE {
+        ?this a rdf:Property .
+         }
+		""" ;
+	] ;
+	sh:property :labelShape,
+			:commentShape,
+			:sourceShape,
+			:categoryShape,
+			:isPartOfShape,
+			:supersededByPropertyShape,
+			:exactMatchShape,
+			:closeMatchShape,
+			:sameAsShape,
+			:domainIncludesShape,
+			:rangeIncludesShape,
+			:inverseOfShape
+.
+
+
+
+
